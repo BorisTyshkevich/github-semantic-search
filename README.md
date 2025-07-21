@@ -1,3 +1,7 @@
+make init   # one-time setup
+make build  # cross compile
+make test   # run the race-enabled tests
+
 # Go Project Template
 
 This repository is a comprehensive template for building production-ready Go applications. It comes pre-configured with a suite of tools and workflows to enforce best practices, automate common development tasks, and streamline the CI/CD process.
