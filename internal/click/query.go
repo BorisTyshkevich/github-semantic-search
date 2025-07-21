@@ -2,20 +2,23 @@ package click
 
 import (
 	"context"
-	"database/sql"
+	"crypto/tls"
 	"strings"
+	"fmt"
+	"os"
+	"time"
 
 	clickhouse "github.com/ClickHouse/clickhouse-go/v2"
 )
 
 type Row struct {
-	Created string
-	Number  int
+	Created time.Time
+	Number  uint32
 	Title   string
 	Actor   string
 	State   string
 	Labels  []string
-	Dist    float32
+	Dist    float64
 }
 
 type Options struct {
@@ -25,10 +28,11 @@ type Options struct {
 	Password string
 	DB       string
 	Table    string
+	TLS      *tls.Config
 }
 
 // Search queries ClickHouse with the embedding vector and optional filters.
-func Search(vec []float32, state, labels string, opt Options) ([]Row, error) {
+func Search(vec []float32, state, labels string, opt Options, debug bool) ([]Row, error) {
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{opt.Host},
 		Auth: clickhouse.Auth{
@@ -36,27 +40,46 @@ func Search(vec []float32, state, labels string, opt Options) ([]Row, error) {
 			Password: opt.Password,
 			Database: opt.DB,
 		},
+		TLS: opt.TLS,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	sb := strings.Builder{}
-	sb.WriteString(`
-SELECT created_at, number, title, actor_login, state, labels,
-       cosineDistance(composite_vec, $1) dist
-FROM ` + opt.Table + ` WHERE 1`)
-	args := []any{vec}
+	// Convert embedding vector to a ClickHouse array literal
+	arrBuf := strings.Builder{}
+	arrBuf.WriteString("[")
+	for i, v := range vec {
+		if i > 0 {
+			arrBuf.WriteString(",")
+		}
+		arrBuf.WriteString(fmt.Sprintf("%.7f", v))
+	}
+	arrBuf.WriteString("]")
+	embArrayStr := arrBuf.String()
 
+	sb := strings.Builder{}
+	sb.WriteString(fmt.Sprintf(`
+SELECT created_at, number, title, actor_login, state, labels,
+       cosineDistance(composite_vec, %s) dist
+FROM %s WHERE 1`, embArrayStr, opt.Table))
+	args := []any{}
+	argNum := 1
 	if state != "" {
-		sb.WriteString(" AND state = $2")
+		sb.WriteString(fmt.Sprintf(" AND state = $%d", argNum))
 		args = append(args, state)
+		argNum++
 	}
 	if labels != "" {
-		sb.WriteString(" AND hasAny(labels, $3)")
+		sb.WriteString(fmt.Sprintf(" AND hasAny(labels, $%d)", argNum))
 		args = append(args, strings.Split(labels, ","))
+		argNum++
 	}
 	sb.WriteString(" ORDER BY dist ASC LIMIT 20")
+
+	if debug {
+		fmt.Fprintf(os.Stderr, "SQL sent to ClickHouse:\n%s\nArgs: %#v\n", sb.String(), args)
+	}
 
 	rows, err := conn.Query(context.Background(), sb.String(), args...)
 	if err != nil {

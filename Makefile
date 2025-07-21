@@ -71,7 +71,9 @@ $(BIN_DIR)/ghsearch-darwin-arm64: | $(BIN_DIR)
 		-ldflags="$(LDFLAGS) -X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE)" \
 		-o $@ $(MAIN_PKG)
 
-build: $(BIN_DIR)/ghsearch-linux-amd64 $(BIN_DIR)/ghsearch-darwin-arm64 ## build both binaries
+build: ## build both binaries
+	$(MAKE) $(BIN_DIR)/ghsearch-linux-amd64
+	$(MAKE) $(BIN_DIR)/ghsearch-darwin-arm64
 
 clean: ## remove compiled binaries
 	rm -rf $(BIN_DIR)

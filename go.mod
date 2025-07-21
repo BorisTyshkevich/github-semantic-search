@@ -1,4 +1,4 @@
-module github.com/yourname/ghsearch
+module github.com/BorisTyshkevich/github-semantic-search
 
 go 1.24
 

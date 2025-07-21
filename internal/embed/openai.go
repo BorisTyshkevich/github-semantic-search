@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
 )
 
 const endpoint = "https://api.openai.com/v1/embeddings"
-const modelID  = "text-embedding-3-small"
+const modelID = "text-embedding-3-small"
 
 type openAIReq struct {
 	Input string `json:"input"`
@@ -23,7 +24,7 @@ type openAIResp struct {
 }
 
 // Vector returns a 1536-dim float32 embedding for the given text.
-func Vector(text string) ([]float32, error) {
+func Vector(text string, debug bool) ([]float32, error) {
 	key := os.Getenv("OPENAI_API_KEY")
 	if key == "" {
 		return nil, errors.New("OPENAI_API_KEY not set")
@@ -48,6 +49,16 @@ func Vector(text string) ([]float32, error) {
 	var out openAIResp
 	if err = json.NewDecoder(res.Body).Decode(&out); err != nil {
 		return nil, err
+	}
+	if debug {
+		emb := out.Data[0].Embedding
+		for i, v := range emb {
+			if i > 0 {
+				os.Stderr.WriteString(",")
+			}
+			os.Stderr.WriteString(fmt.Sprintf("%.7f", v))
+		}
+		os.Stderr.WriteString("\n")
 	}
 	return out.Data[0].Embedding, nil
 }
