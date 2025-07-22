@@ -66,11 +66,11 @@ $(BIN_DIR)/ghsearch-linux-amd64: | $(BIN_DIR)
 		-o $@ $(MAIN_PKG)
 
 $(BIN_DIR)/ghsearch-darwin-arm64: | $(BIN_DIR)
-       @echo "→ building $@"
-       GOOS=darwin GOARCH=arm64 CGO_ENABLED=$(CGO) \
-       $(GO) build -trimpath \
-               -ldflags="$(LDFLAGS) -X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE)" \
-               -o $@ $(MAIN_PKG)
+	@echo "→ building $@"
+	GOOS=darwin GOARCH=arm64 CGO_ENABLED=$(CGO) \
+	$(GO) build -trimpath \
+		-ldflags="$(LDFLAGS) -X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE)" \
+		-o $@ $(MAIN_PKG)
 
 $(BIN_DIR)/ghweb-linux-amd64: | $(BIN_DIR)
 	@echo "→ building $@"
@@ -87,10 +87,10 @@ $(BIN_DIR)/ghweb-darwin-arm64: | $(BIN_DIR)
 	-o $@ $(WEB_PKG)
 
 build: ## build both binaries
-       $(MAKE) $(BIN_DIR)/ghsearch-linux-amd64
-       $(MAKE) $(BIN_DIR)/ghsearch-darwin-arm64
+	$(MAKE) $(BIN_DIR)/ghsearch-linux-amd64
+	$(MAKE) $(BIN_DIR)/ghsearch-darwin-arm64
 
-build-web: $(BIN_DIR)/ghweb-linux-amd64 $(BIN_DIR)/ghweb-darwin-arm64 ## build web server
+build-web: $(BIN_DIR)/ghweb-darwin-arm64 ## build web server
 
 run-web: ## start the web server locally
 	$(GO) run $(WEB_PKG)

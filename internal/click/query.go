@@ -92,6 +92,9 @@ func Search(vec []float32, state, labels string, opt Options, debug bool) ([]Row
 			&r.Labels, &r.Dist); err != nil {
 			return nil, err
 		}
+		if debug {
+			fmt.Fprintf(os.Stderr, "Row: %+v\n", r)
+		}
 		out = append(out, r)
 	}
 	return out, nil

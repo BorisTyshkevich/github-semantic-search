@@ -33,7 +33,7 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
   data.forEach(item => {
     const div = document.createElement('div');
     div.className = 'issue';
-    div.innerHTML = `<a href="https://github.com/ClickHouse/ClickHouse/issues/${item.number}" target="_blank">#${item.number}</a> ${item.title}`;
+    div.innerHTML = `<a href="https://github.com/ClickHouse/ClickHouse/issues/${item.Number}" target="_blank">#${item.Number}</a> ${item.Title}`;
     container.appendChild(div);
   });
 });
