@@ -16,6 +16,7 @@
 GO        ?= go
 BIN_DIR   ?= bin
 MAIN_PKG  ?= ./cmd/ghsearch
+WEB_PKG   ?= ./cmd/ghweb
 CGO       ?= 0                    # keep everything static
 LDFLAGS   ?= -s -w
 VERSION   ?= $(shell git describe --tags --always --dirty 2>/dev/null)
@@ -65,17 +66,36 @@ $(BIN_DIR)/ghsearch-linux-amd64: | $(BIN_DIR)
 		-o $@ $(MAIN_PKG)
 
 $(BIN_DIR)/ghsearch-darwin-arm64: | $(BIN_DIR)
+       @echo "→ building $@"
+       GOOS=darwin GOARCH=arm64 CGO_ENABLED=$(CGO) \
+       $(GO) build -trimpath \
+               -ldflags="$(LDFLAGS) -X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE)" \
+               -o $@ $(MAIN_PKG)
+
+$(BIN_DIR)/ghweb-linux-amd64: | $(BIN_DIR)
+	@echo "→ building $@"
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO) \
+	$(GO) build -trimpath \
+	        -ldflags="$(LDFLAGS) -X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE)" \
+	        -o $@ $(WEB_PKG)
+
+$(BIN_DIR)/ghweb-darwin-arm64: | $(BIN_DIR)
 	@echo "→ building $@"
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=$(CGO) \
 	$(GO) build -trimpath \
-		-ldflags="$(LDFLAGS) -X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE)" \
-		-o $@ $(MAIN_PKG)
+	-ldflags="$(LDFLAGS) -X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE)" \
+	-o $@ $(WEB_PKG)
 
 build: ## build both binaries
-	$(MAKE) $(BIN_DIR)/ghsearch-linux-amd64
-	$(MAKE) $(BIN_DIR)/ghsearch-darwin-arm64
+       $(MAKE) $(BIN_DIR)/ghsearch-linux-amd64
+       $(MAKE) $(BIN_DIR)/ghsearch-darwin-arm64
+
+build-web: $(BIN_DIR)/ghweb-linux-amd64 $(BIN_DIR)/ghweb-darwin-arm64 ## build web server
+
+run-web: ## start the web server locally
+	$(GO) run $(WEB_PKG)
 
 clean: ## remove compiled binaries
 	rm -rf $(BIN_DIR)
 
-.PHONY: init tidy deps tools lint test build clean
+.PHONY: init tidy deps tools lint test build build-web run-web clean
