@@ -63,3 +63,11 @@ func Vector(text string, debug bool) ([]float32, error) {
 	return out.Data[0].Embedding, nil
 }
 
+// OpenAI implements Embedder using the OpenAI API.
+type OpenAI struct{}
+
+func (OpenAI) Vector(text string, debug bool) ([]float32, error) {
+	return Vector(text, debug)
+}
+
+var _ Embedder = (*OpenAI)(nil)
