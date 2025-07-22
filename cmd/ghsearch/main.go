@@ -89,11 +89,13 @@ func main() {
 		}
 		seen[r.Number] = struct{}{}
 		url := fmt.Sprintf("https://github.com/ClickHouse/ClickHouse/issues/%d", r.Number)
-		fmt.Printf("%s %.4f %6s  \x1b]8;;%s\a#%d\x1b]8;;\a  (%s) [%s]\n",
-			r.Created, r.Dist, r.State, url, r.Number,
+		dateStr := r.Created.Format("2006-01-02")
+		fmt.Printf("%s \x1b]8;;%s\a#%d\x1b]8;;\a %.4f %6s  (%s) [%s]\n",
+			dateStr, url, r.Number, r.Dist, r.State,
 			r.Title, strings.Join(r.Labels, ","))
 	}
 }
+
 
 type clickhouseConfig struct {
 	Connections struct {

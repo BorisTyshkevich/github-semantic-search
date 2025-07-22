@@ -62,3 +62,4 @@ func Vector(text string, debug bool) ([]float32, error) {
 	}
 	return out.Data[0].Embedding, nil
 }
+

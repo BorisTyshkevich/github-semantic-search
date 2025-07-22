@@ -15,7 +15,6 @@ type Row struct {
 	Created time.Time
 	Number  uint32
 	Title   string
-	Actor   string
 	State   string
 	Labels  []string
 	Dist    float64
@@ -60,9 +59,8 @@ func Search(vec []float32, state, labels string, opt Options, debug bool) ([]Row
 
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf(`
-SELECT created_at, number, title, actor_login, state, labels,
-       cosineDistance(composite_vec, %s) dist
-FROM %s WHERE 1`, embArrayStr, opt.Table))
+       SELECT created_at, number, title, state, labels,cosineDistance(composite_vec, %s) dist
+       FROM %s WHERE 1`, embArrayStr, opt.Table))
 	args := []any{}
 	argNum := 1
 	if state != "" {
@@ -75,7 +73,7 @@ FROM %s WHERE 1`, embArrayStr, opt.Table))
 		args = append(args, strings.Split(labels, ","))
 		argNum++
 	}
-	sb.WriteString(" ORDER BY dist ASC LIMIT 20")
+	sb.WriteString(" ORDER BY dist ASC LIMIT 15")
 
 	if debug {
 		fmt.Fprintf(os.Stderr, "SQL sent to ClickHouse:\n%s\nArgs: %#v\n", sb.String(), args)
@@ -90,7 +88,7 @@ FROM %s WHERE 1`, embArrayStr, opt.Table))
 	var out []Row
 	for rows.Next() {
 		var r Row
-		if err = rows.Scan(&r.Created, &r.Number, &r.Title, &r.Actor, &r.State,
+		if err = rows.Scan(&r.Created, &r.Number, &r.Title, &r.State,
 			&r.Labels, &r.Dist); err != nil {
 			return nil, err
 		}
